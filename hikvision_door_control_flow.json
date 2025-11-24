@@ -1,0 +1,113 @@
+[
+    {
+        "id": "hikvision-door-control-flow",
+        "type": "tab",
+        "label": "HikVision Door Control",
+        "disabled": false,
+        "info": "Flow to remotely open HikVision door via ISAPI"
+    },
+    {
+        "id": "door-open-http",
+        "type": "http request",
+        "z": "hikvision-door-control-flow",
+        "name": "Open HikVision Door",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://{{hikvision_ip}}:{{hikvision_port}}/ISAPI/AccessControl/RemoteControl/door",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "digest",
+        "senderr": false,
+        "x": 510,
+        "y": 160,
+        "wires": [
+            [
+                "response-handler"
+            ]
+        ],
+        "headers": [
+            {
+                "key": "Content-Type",
+                "value": "application/xml"
+            }
+        ],
+        "params": [],
+        "xproperty": [],
+        "payload": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><RemoteControlDoor><cmd>open</cmd><doorNo>{{door_number}}</doorNo></RemoteControlDoor>",
+        "options": []
+    },
+    {
+        "id": "trigger-door-open",
+        "type": "inject",
+        "z": "hikvision-door-control-flow",
+        "name": "Open Door Trigger",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 270,
+        "y": 160,
+        "wires": [
+            [
+                "door-open-http"
+            ]
+        ]
+    },
+    {
+        "id": "response-handler",
+        "type": "debug",
+        "z": "hikvision-door-control-flow",
+        "name": "Response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 750,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "ha-door-open",
+        "type": "api-call-service",
+        "z": "hikvision-door-control-flow",
+        "name": "Open Door from HA",
+        "server": "",
+        "version": 5,
+        "debugenabled": false,
+        "domain": "notify",
+        "service": "persistent_notification",
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [],
+        "data": "",
+        "dataType": "json",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "x": 280,
+        "y": 240,
+        "wires": [
+            [
+                "door-open-http"
+            ]
+        ]
+    }
+]
