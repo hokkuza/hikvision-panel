@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""
+Test script for HikVision door control API
+This script demonstrates how to remotely open a HikVision door via ISAPI
+"""
+
+import requests
+from requests.auth import HTTPDigestAuth
+import xml.etree.ElementTree as ET
+import sys
+
+def open_door(ip, port, username, password, door_number=1, protocol='http'):
+    """
+    Open a HikVision door via ISAPI
+    
+    Args:
+        ip (str): IP address of the HikVision device
+        port (int): Port number of the HikVision device
+        username (str): Username for authentication
+        password (str): Password for authentication
+        door_number (int): Door number to open (default: 1)
+        protocol (str): Protocol to use (default: http)
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    
+    # API endpoint
+    url = f"{protocol}://{ip}:{port}/ISAPI/AccessControl/RemoteControl/door"
+    
+    # XML payload
+    xml_payload = f'''<?xml version="1.0" encoding="UTF-8"?>
+<RemoteControlDoor>
+    <cmd>open</cmd>
+    <doorNo>{door_number}</doorNo>
+</RemoteControlDoor>'''
+    
+    # Headers
+    headers = {
+        'Content-Type': 'application/xml'
+    }
+    
+    try:
+        # Make the request with digest authentication
+        response = requests.post(
+            url,
+            data=xml_payload,
+            headers=headers,
+            auth=HTTPDigestAuth(username, password),
+            timeout=10
+        )
+        
+        # Check response
+        if response.status_code == 200:
+            print(f"Door {door_number} opened successfully!")
+            return True
+        else:
+            print(f"Failed to open door. Status code: {response.status_code}")
+            print(f"Response: {response.text}")
+            return False
+            
+    except requests.exceptions.RequestException as e:
+        print(f"Error making request: {e}")
+        return False
+
+def main():
+    """
+    Main function to demonstrate usage
+    """
+    if len(sys.argv) != 6:
+        print("Usage: python test_hikvision_door.py <ip> <port> <username> <password> <door_number>")
+        print("Example: python test_hikvision_door.py 192.168.1.100 80 admin mypassword 1")
+        return
+    
+    ip = sys.argv[1]
+    port = int(sys.argv[2])
+    username = sys.argv[3]
+    password = sys.argv[4]
+    door_number = int(sys.argv[5])
+    
+    success = open_door(ip, port, username, password, door_number)
+    
+    if success:
+        print("Door opened successfully!")
+    else:
+        print("Failed to open door!")
+
+if __name__ == "__main__":
+    main()
