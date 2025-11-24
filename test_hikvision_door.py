@@ -25,14 +25,28 @@ def open_door(ip, port, username, password, door_number=1, protocol='http'):
         bool: True if successful, False otherwise
     """
     
-    # API endpoint
-    url = f"{protocol}://{ip}:{port}/ISAPI/AccessControl/RemoteControl/door"
+    # API endpoint - primary method
+    url = f"{protocol}://{ip}:{port}/ISAPI/AccessControl/door/{door_number}/open"
     
-    # XML payload
+    # Alternative endpoints that might work with different models
+    alternative_urls = [
+        f"{protocol}://{ip}:{port}/ISAPI/AccessControl/door/open",
+        f"{protocol}://{ip}:{port}/ISAPI/AccessControl/RemoteControl/door"
+    ]
+    
+    # XML payload for primary method
     xml_payload = f'''<?xml version="1.0" encoding="UTF-8"?>
+<AccessControlDoorOpen xmlns="urn:psialliance:params:xml:ns:ptz-1">
+    <doorID>{door_number}</doorID>
+    <delayTime>5</delayTime>
+</AccessControlDoorOpen>'''
+    
+    # Alternative XML payload for some models
+    alt_xml_payload = f'''<?xml version="1.0" encoding="UTF-8"?>
 <RemoteControlDoor>
     <cmd>open</cmd>
     <doorNo>{door_number}</doorNo>
+    <delayTime>5</delayTime>
 </RemoteControlDoor>'''
     
     # Headers
@@ -41,7 +55,7 @@ def open_door(ip, port, username, password, door_number=1, protocol='http'):
     }
     
     try:
-        # Make the request with digest authentication
+        # First, try the primary endpoint with primary XML
         response = requests.post(
             url,
             data=xml_payload,
@@ -52,11 +66,77 @@ def open_door(ip, port, username, password, door_number=1, protocol='http'):
         
         # Check response
         if response.status_code == 200:
-            print(f"Door {door_number} opened successfully!")
+            print(f"Door {door_number} opened successfully using primary endpoint!")
             return True
         else:
-            print(f"Failed to open door. Status code: {response.status_code}")
-            print(f"Response: {response.text}")
+            print(f"Primary endpoint failed with status code: {response.status_code}")
+            print("Trying alternative endpoints...")
+            
+            # Try alternative endpoints with primary XML
+            for alt_url in alternative_urls:
+                try:
+                    print(f"Trying alternative endpoint: {alt_url}")
+                    response = requests.post(
+                        alt_url,
+                        data=xml_payload,
+                        headers=headers,
+                        auth=HTTPDigestAuth(username, password),
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        print(f"Door {door_number} opened successfully using alternative endpoint: {alt_url}")
+                        return True
+                    else:
+                        print(f"Alternative endpoint {alt_url} failed with status code: {response.status_code}")
+                        
+                except requests.exceptions.RequestException as e:
+                    print(f"Error trying alternative endpoint {alt_url}: {e}")
+            
+            # If all primary XML attempts failed, try alternative XML with primary endpoint
+            print("Trying alternative XML format with primary endpoint...")
+            try:
+                response = requests.post(
+                    url,
+                    data=alt_xml_payload,
+                    headers=headers,
+                    auth=HTTPDigestAuth(username, password),
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    print(f"Door {door_number} opened successfully using alternative XML format!")
+                    return True
+                else:
+                    print(f"Alternative XML format with primary endpoint failed with status code: {response.status_code}")
+                    
+            except requests.exceptions.RequestException as e:
+                print(f"Error trying alternative XML format: {e}")
+            
+            # Finally, try alternative endpoints with alternative XML
+            print("Trying alternative endpoints with alternative XML format...")
+            for alt_url in alternative_urls:
+                try:
+                    print(f"Trying alternative endpoint with alternative XML: {alt_url}")
+                    response = requests.post(
+                        alt_url,
+                        data=alt_xml_payload,
+                        headers=headers,
+                        auth=HTTPDigestAuth(username, password),
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        print(f"Door {door_number} opened successfully using {alt_url} with alternative XML!")
+                        return True
+                    else:
+                        print(f"Alternative endpoint {alt_url} with alternative XML failed with status code: {response.status_code}")
+                        
+                except requests.exceptions.RequestException as e:
+                    print(f"Error trying alternative endpoint with alternative XML {alt_url}: {e}")
+            
+            print(f"All attempts to open door {door_number} failed.")
+            print(f"Last response: {response.text}")
             return False
             
     except requests.exceptions.RequestException as e:
