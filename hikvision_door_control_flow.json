@@ -14,7 +14,7 @@
         "method": "POST",
         "ret": "txt",
         "paytoqs": "ignore",
-        "url": "http://{{hikvision_ip}}:{{hikvision_port}}/ISAPI/AccessControl/RemoteControl/door",
+        "url": "http://{{hikvision_ip}}:{{hikvision_port}}/ISAPI/AccessControl/door/{{door_number}}/open",
         "tls": "",
         "persist": false,
         "proxy": "",
@@ -35,7 +35,7 @@
         ],
         "params": [],
         "xproperty": [],
-        "payload": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><RemoteControlDoor><cmd>open</cmd><doorNo>{{door_number}}</doorNo></RemoteControlDoor>",
+        "payload": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><AccessControlDoorOpen xmlns=\"urn:psialliance:params:xml:ns:ptz-1\"><doorID>{{door_number}}</doorID><delayTime>5</delayTime></AccessControlDoorOpen>",
         "options": []
     },
     {
